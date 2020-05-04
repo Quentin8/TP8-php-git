@@ -1,0 +1,1 @@
+select nom, prenom from auteur
