@@ -50,10 +50,10 @@
 
 <div class="container">
     <div class="col-md-7">
-        <form>
+        <form method="post">
             <div class="form-group">
                 <label for="exampleInputEmail1">Auteur</label>
-                <select class="form-control">
+                <select class="form-control" name ="author">
                     <?php
                     include "connexpdo.php";
                     $dsn = 'pgsql:dbname=citations;host=localhost;port=5432';
@@ -64,19 +64,19 @@
                     $sth->execute();
                     $result=$sth->fetch();
                     $size = $result['count'];
-                    $query = "SELECT prenom,nom FROM auteur";
+                    $query = "SELECT prenom,nom,id FROM auteur";
                     $sth = connexpdo($dsn, $user, $password)->query($query);
                     $sth->execute();
                     $result=$sth->fetchAll();
                     for($i = 0;$i<$size;$i++){
-                        echo "<option>".$result[$i]['nom']. " " . $result[$i]['prenom'] ."</option>";
+                        echo "<option value = '" . $result[$i]['id'] . "'>".$result[$i]['nom']. " " . $result[$i]['prenom'] ."</option>";
                     }
                     ?>
                 </select>
             </div>
             <div class="form-group">
                 <label for="exampleInputPassword1">Siècle</label>
-                <select class="form-control">
+                <select class="form-control" name ="siecle">
                     <?php
                     $dsn = 'pgsql:dbname=citations;host=localhost;port=5432';
                     $user = 'postgres';
@@ -86,29 +86,82 @@
                     $sth->execute();
                     $result=$sth->fetch();
                     $size = $result['count'];
-                    $query = "SELECT numero FROM siecle";
+                    $query = "SELECT numero, id FROM siecle";
                     $sth = connexpdo($dsn, $user, $password)->query($query);
                     $sth->execute();
                     $result=$sth->fetchAll();
                     for($i = 0;$i<$size;$i++){
-                        echo "<option>".$result[$i]['numero']."</option>";
+                        echo "<option value = '" . $result[$i]['id'] . "'>".$result[$i]['numero']."</option>";
                     }
                     ?>
                 </select>
             </div>
-            <div class="form-group form-check">
-                <input type="checkbox" class="form-check-input" id="exampleCheck1">
-                <label class="form-check-label" for="exampleCheck1">Rechercher</label>
-            </div>
-            <button type="submit" class="btn btn-primary">Submit</button>
+            <button type="submit" name="searchAuthor" class="btn btn-primary">Submit</button>
         </form>
     </div>
+    <?php
+        if(isset($_POST["searchAuthor"])){
+            $dsn = 'pgsql:dbname=citations;host=localhost;port=5432';
+            $user = 'postgres';
+            $password = 'new_password';
+            $conn = connexpdo($dsn, $user, $password);
+            $sth = $conn->query($query);
+            $sth->execute();
+            $result=$sth->fetchAll();
+            echo'<br>';
+            echo'<table class="table">
+            <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Citation</th>
+                    <th scope="col">Auteur</th>
+                    <th scope="col">Siecle</th>
+                </tr>
+            </thead>
+            <tbody>';
+
+            $nb_citations=0;
+            $query = "SELECT phrase FROM citation WHERE auteurid =".$_POST['author']. " AND siecleid = ".$_POST['siecle'];
+            $sth = $conn->query($query);
+            $sth->execute();
+            foreach ($sth as $data) {
+                $nb_citations++;
+            }
+
+            if($nb_citations>=1) {
+                $query = "SELECT phrase FROM citation WHERE auteurid =" . $_POST['author'] . " AND siecleid = " . $_POST['siecle'];
+                $sth = $conn->prepare($query);
+                $sth->execute();
+                $result=$sth->fetchAll();
+
+                for ($it = 0; $it < $nb_citations; $it++) {
+                    $index=$it+1;
+                    echo '<tr>';
+                    echo '<th scope="row">'.$index.'</th>';
+                    echo '<td>' . $result[$it]['phrase'] . '</td>';
+
+                    $query1 = "SELECT nom, prenom FROM auteur WHERE id =" . $_POST['author'];
+                    $auteur = $conn->query($query1);
+                    foreach ($auteur as $data) {
+                        echo '<td>' . $data['prenom'] . " " . $data['nom'] . '</td>';
+                    }
+                    $query2 = "SELECT numero FROM siecle WHERE id =" . $_POST['siecle'];
+                    $siecle = $conn->query($query2);
+                    foreach ($siecle as $data) {
+                        echo '<td>' . $data['numero'] . '</td>';
+                    }
+                    echo '</tr>';
+                }
+            }
+            else {
+                echo "Cet auteur n'a pas fait de citations durant ce siècle. <br><br>";
+            }
+            echo'</tbody>
+</table>';
+        }
+    ?>
 
 </div>
-
-
-
-
 </body>
 
 </html>

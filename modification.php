@@ -46,11 +46,75 @@
         </ul>
     </div>
 </nav>
+<?php
+    include "connexpdo.php";
+    try{
+        $conn = connexpdo('pgsql:dbname=citations;host=localhost;port=5432','postgres','new_password');
+        $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    }catch(PDOException $except){
+        echo "Erreur : " . $except->getMessage();
+    }
+    echo '<div class="container col-sm-9 jumbotron" ><h1>Ajout</h1><hr>
+        <form method="POST" action="modification.php">
+            <div class="form-group">
+                <label>ID de l\'auteur</label>
+                <input name="authorId" type="text" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Nom de l\'auteur</label>
+                <input name="authorLastName" type="text" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Prénom de l\'auteur</label>
+                <input name="authorFirstName" type="text" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>ID du siècle</label>
+                <input name="centuryId" type="text" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Siecle</label>
+                <input name="century" type="text" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Citation</label>
+                <input name="citation" type="text" class="form-control" required>
+            </div><br>
+            <button type="submit" class="btn btn-primary">Ajouter</button>
+        </form>
+<br><br>';
+echo '<h1>Supprimer</h1><hr><br>
+        <form method="POST" action="modification.php">
+            <div class="form-group">
+                <select class="form-control" name="citationId">
+                    <option selected disabled>Sélectionnez l\'ID d\'une citation</option>';
+$query = "SELECT id, phrase FROM citation";
+$numero = $conn->query($query);
+foreach ($numero as $data){
+    echo "<option value=".$data['id'].">".$data['phrase']."</option>";
+}
 
+echo'</select></div><br><button type="submit" class="btn btn-primary">Supprimer</button></form></div>';
 
+if(isset($_POST['authorId']) && isset($_POST['authorLastName']) &&  isset($_POST['authorFirstName']) && isset($_POST['centuryId']) && isset($_POST['century']) && isset($_POST['citation'])) {
 
+    $sql = "INSERT INTO auteur (id, nom, prenom) VALUES (?, ?, ?)";
+    $sqlR = $conn->prepare($sql);
+    $sqlR->execute([$_POST['authorId'], $_POST['authorLastName'], $_POST['authorFirstName']]);
+    $sql = "INSERT INTO siecle (id, numero) VALUES (?, ?)";
+    $sqlR = $conn->prepare($sql);
+    $sqlR->execute([$_POST['centuryId'], $_POST['century']]);
+    $nbr_citations=$_POST['centuryId']+$_POST['authorId'];
+    $sql = "INSERT INTO citation (id, phrase, auteurid, siecleid) VALUES (?, ?, ?, ?)";
+    $sqlR = $conn->prepare($sql);
+    $sqlR->execute([$nbr_citations, $_POST["citation"], $_POST['authorId'], $_POST['centuryId']]);
+}
+$citationId=$_POST['citationId'];
 
+if($_POST['citationId'] != NULL) {
+    $conn->exec("DELETE FROM citation WHERE id=" . $citationId);
+}
 
+?>
 </body>
-
 </html>
