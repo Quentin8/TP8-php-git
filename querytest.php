@@ -8,6 +8,7 @@
     $sth = connexpdo($dsn, $user, $password)->query($query);
     $sth->execute();
     $result=$sth->fetchAll();
+    echo "<p>Prenom / Nom</p>";
     foreach($result as $data)
     {
         echo $data['prenom']. " " . $data['nom'] . "<br>";

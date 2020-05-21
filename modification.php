@@ -100,14 +100,20 @@ if(isset($_POST['authorId']) && isset($_POST['authorLastName']) &&  isset($_POST
 
     $sql = "INSERT INTO auteur (id, nom, prenom) VALUES (?, ?, ?)";
     $sqlR = $conn->prepare($sql);
-    $sqlR->execute([$_POST['authorId'], $_POST['authorLastName'], $_POST['authorFirstName']]);
+        $sqlR->execute([$_POST['authorId'], $_POST['authorLastName'], $_POST['authorFirstName']]);
     $sql = "INSERT INTO siecle (id, numero) VALUES (?, ?)";
     $sqlR = $conn->prepare($sql);
     $sqlR->execute([$_POST['centuryId'], $_POST['century']]);
-    $nbr_citations=$_POST['centuryId']+$_POST['authorId'];
+    //recuperer id citation max
+    $sql1 = "SELECT MAX(id) FROM citation";
+    $sqlR1 = $conn->query($sql1);
+    $sqlR1->execute();
+    $result = $sqlR1->fetch();
+    $idCit = $result[0] + 1;
+
     $sql = "INSERT INTO citation (id, phrase, auteurid, siecleid) VALUES (?, ?, ?, ?)";
     $sqlR = $conn->prepare($sql);
-    $sqlR->execute([$nbr_citations, $_POST["citation"], $_POST['authorId'], $_POST['centuryId']]);
+    $sqlR->execute([$idCit, $_POST["citation"], $_POST['authorId'], $_POST['centuryId']]);
 }
 $citationId=$_POST['citationId'];
 
